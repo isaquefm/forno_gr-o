@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, Loader2, Minus, Plus, Trash2, X } from "lucide-react";
+import { Check, Eye, Loader2, Minus, Plus, Trash2, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { CheckoutForm } from "@/components/cart/CheckoutForm";
 import { useCart } from "@/context/CartContext";
@@ -99,6 +100,7 @@ export function CartDrawer() {
         customerName: values.name,
         customerEmail: customer?.email,
         fulfillment: values.fulfillment,
+        tableNumber: values.fulfillment === "Na mesa" ? values.tableNumber : undefined,
         address: values.fulfillment === "Entrega" ? values.address : undefined,
         payment: values.payment,
         changeFor: values.payment === "Dinheiro" ? values.changeFor : undefined,
@@ -127,7 +129,12 @@ export function CartDrawer() {
       console.warn("Aviso: falha ao salvar pedido no painel interno, prosseguindo com WhatsApp.", err);
     }
 
-    // 2. Monta mensagem do WhatsApp personalizada com o código e e-mail Google
+    // Link de acompanhamento
+    const trackingUrl = generatedCode
+      ? `${window.location.origin}/pedido/${generatedCode.replace("#", "")}`
+      : undefined;
+
+    // 2. Monta mensagem do WhatsApp personalizada com o código, mesa e e-mail Google
     const message = buildOrderMessage(
       values,
       items.map((item) => ({
@@ -138,6 +145,7 @@ export function CartDrawer() {
       subtotal,
       generatedCode,
       customer?.email,
+      trackingUrl,
     );
 
     const whatsappUrl = buildWhatsAppUrl(phone, message);
@@ -151,11 +159,13 @@ export function CartDrawer() {
     setValues(emptyCheckout);
     setErrors({});
 
-    // 5. Redireciona automaticamente para o WhatsApp
+    // 5. Redireciona automaticamente para o WhatsApp após 1.6s
     setTimeout(() => {
       window.location.href = whatsappUrl;
     }, 1600);
   }
+
+  const cleanOrderCode = createdOrderCode ? createdOrderCode.replace("#", "") : null;
 
   return (
     <div
@@ -182,7 +192,7 @@ export function CartDrawer() {
       >
         <form onSubmit={handleSubmit} className="flex h-full flex-col" noValidate>
           <div className="flex items-center justify-between border-b border-ink/10 px-5 py-4">
-            <h2 id={titleId} className="font-serif text-2xl">
+            <h2 id={titleId} className="font-serif text-2xl text-ink">
               Sua sacola
             </h2>
             <button
@@ -190,7 +200,7 @@ export function CartDrawer() {
               onClick={closeDrawer}
               ref={closeButtonRef}
               aria-label="Fechar sacola"
-              className="grid size-10 cursor-pointer place-items-center rounded-full hover:bg-surface"
+              className="grid size-10 cursor-pointer place-items-center rounded-full hover:bg-surface text-ink"
             >
               <X className="size-5" />
             </button>
@@ -199,11 +209,11 @@ export function CartDrawer() {
           <div className="flex-1 overflow-y-auto">
             {/* Mensagem de confirmação de pedido enviado */}
             {orderSent ? (
-              <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
+              <div className="flex flex-col items-center justify-center px-5 py-14 text-center">
                 <div className="grid size-16 place-items-center rounded-full bg-olive/15">
                   <Check className="size-8 text-olive" />
                 </div>
-                <p className="mt-5 font-serif text-3xl">Pedido registrado!</p>
+                <p className="mt-5 font-serif text-3xl text-ink">Pedido registrado!</p>
                 {createdOrderCode ? (
                   <span className="mt-2 inline-block rounded-full bg-surface px-4 py-1 text-sm font-semibold tracking-wider text-ink">
                     Código: {createdOrderCode}
@@ -213,9 +223,18 @@ export function CartDrawer() {
                   Estamos redirecionando você para o WhatsApp da Forno & Grão para finalizar o
                   atendimento.
                 </p>
-                <p className="mt-2 text-xs text-ink/50">
-                  Se não abrir automaticamente em instantes, clique abaixo:
-                </p>
+
+                {cleanOrderCode ? (
+                  <Link
+                    href={`/pedido/${cleanOrderCode}`}
+                    onClick={closeDrawer}
+                    className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-canvas transition hover:bg-ink/85 shadow-md"
+                  >
+                    <Eye className="size-4" />
+                    Acompanhar Status ao Vivo
+                  </Link>
+                ) : null}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -224,14 +243,14 @@ export function CartDrawer() {
                       : "Olá! Acabei de enviar meu pedido pelo site.";
                     window.location.href = buildWhatsAppUrl(phone, fallbackMsg);
                   }}
-                  className="mt-6 inline-flex h-11 items-center rounded-full bg-terracotta px-5 text-sm font-semibold text-canvas hover:bg-terracotta-dark"
+                  className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-full bg-terracotta px-5 text-xs font-semibold text-canvas hover:bg-terracotta-dark transition"
                 >
                   Abrir WhatsApp agora
                 </button>
               </div>
             ) : items.length === 0 ? (
               <div className="px-5 py-16 text-center">
-                <p className="font-serif text-3xl">Sua sacola está vazia</p>
+                <p className="font-serif text-3xl text-ink">Sua sacola está vazia</p>
                 <p className="mt-3 text-sm text-ink/70">
                   Escolha um pão, um café ou um combo no cardápio.
                 </p>
@@ -258,7 +277,7 @@ export function CartDrawer() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
-                        <p className="font-semibold">{item.product.name}</p>
+                        <p className="font-semibold text-ink">{item.product.name}</p>
                         <button
                           type="button"
                           onClick={() => removeItem(item.product.id)}
@@ -276,18 +295,18 @@ export function CartDrawer() {
                           type="button"
                           onClick={() => decrementItem(item.product.id)}
                           aria-label={`Diminuir quantidade de ${item.product.name}`}
-                          className="grid size-7 cursor-pointer place-items-center rounded-full"
+                          className="grid size-7 cursor-pointer place-items-center rounded-full text-ink"
                         >
                           <Minus className="size-3.5" />
                         </button>
-                        <span className="min-w-7 text-center text-sm font-semibold tabular-nums">
+                        <span className="min-w-7 text-center text-sm font-semibold tabular-nums text-ink">
                           {item.quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => incrementItem(item.product.id)}
                           aria-label={`Aumentar quantidade de ${item.product.name}`}
-                          className="grid size-7 cursor-pointer place-items-center rounded-full"
+                          className="grid size-7 cursor-pointer place-items-center rounded-full text-ink"
                         >
                           <Plus className="size-3.5" />
                         </button>
@@ -307,7 +326,7 @@ export function CartDrawer() {
             <div className="border-t border-ink/10 px-5 py-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-ink/70">Subtotal</span>
-                <span className="text-lg font-semibold tabular-nums">
+                <span className="text-lg font-semibold tabular-nums text-ink">
                   {formatCurrency(subtotal)}
                 </span>
               </div>

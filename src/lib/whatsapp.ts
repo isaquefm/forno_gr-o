@@ -1,6 +1,11 @@
 import { formatCurrency, parseMoney } from "./currency";
 
-export const fulfillmentOptions = ["Entrega", "Retirada no balcão"] as const;
+export const fulfillmentOptions = [
+  "Na mesa",
+  "Retirada no balcão",
+  "Entrega",
+] as const;
+
 export const paymentOptions = ["Pix", "Cartão na entrega", "Dinheiro"] as const;
 
 export type Fulfillment = (typeof fulfillmentOptions)[number];
@@ -9,6 +14,7 @@ export type PaymentMethod = (typeof paymentOptions)[number];
 export type CheckoutValues = {
   name: string;
   fulfillment: Fulfillment;
+  tableNumber: string;
   address: string;
   payment: PaymentMethod;
   changeFor: string;
@@ -21,12 +27,16 @@ export type OrderLine = {
 };
 
 export type FieldErrors = Partial<
-  Record<"name" | "address" | "changeFor" | "cart" | "whatsapp" | "auth", string>
+  Record<
+    "name" | "tableNumber" | "address" | "changeFor" | "cart" | "whatsapp" | "auth",
+    string
+  >
 >;
 
 export const emptyCheckout: CheckoutValues = {
   name: "",
-  fulfillment: "Retirada no balcão",
+  fulfillment: "Na mesa",
+  tableNumber: "",
   address: "",
   payment: "Pix",
   changeFor: "",
@@ -52,6 +62,10 @@ export function validateCheckout(
 
   if (name.length < 2) {
     errors.name = "Informe o nome de quem vai receber o pedido.";
+  }
+
+  if (values.fulfillment === "Na mesa" && values.tableNumber.trim().length === 0) {
+    errors.tableNumber = "Informe o número ou identificação da mesa.";
   }
 
   if (values.fulfillment === "Entrega" && values.address.trim().length < 6) {
@@ -81,6 +95,7 @@ export function buildOrderMessage(
   subtotal: number,
   orderCode?: string,
   customerEmail?: string,
+  trackingUrl?: string,
 ) {
   const header = orderCode
     ? `*🍞 Pedido ${orderCode} — Forno & Grão ☕*`
@@ -98,9 +113,14 @@ export function buildOrderMessage(
     rows.push(`📧 *E-mail (Google):* ${customerEmail.trim()}`);
   }
 
-  rows.push(
-    `📍 *Modalidade:* ${values.fulfillment === "Entrega" ? "🚚 Entrega em domicílio" : "🏪 Retirada no balcão"}`,
-  );
+  let modalityLabel = "🏪 Retirada no balcão";
+  if (values.fulfillment === "Na mesa") {
+    modalityLabel = `🍽️ Consumo no Local — Mesa ${values.tableNumber.trim()}`;
+  } else if (values.fulfillment === "Entrega") {
+    modalityLabel = "🚚 Entrega em domicílio";
+  }
+
+  rows.push(`📍 *Modalidade:* ${modalityLabel}`);
 
   if (values.fulfillment === "Entrega") {
     rows.push(`🏠 *Endereço:* ${values.address.trim()}`);
@@ -126,6 +146,10 @@ export function buildOrderMessage(
 
   if (values.fulfillment === "Entrega") {
     rows.push("🛵 *Taxa de Entrega:* a combinar neste atendimento.");
+  }
+
+  if (trackingUrl) {
+    rows.push("", `👀 *Acompanhe o status ao vivo:* ${trackingUrl}`);
   }
 
   rows.push(

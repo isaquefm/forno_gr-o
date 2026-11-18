@@ -1,12 +1,31 @@
 @import "tailwindcss";
 
-@theme {
+:root {
   --color-canvas: #faf7f2;
   --color-surface: #f2ece1;
   --color-ink: #2c1e16;
   --color-terracotta: #c85a32;
   --color-terracotta-dark: #a84622;
   --color-olive: #5a6b47;
+}
+
+.dark {
+  /* Modo Dark Café Especial (Dark Roast) - Marrom profundo, acolhedor e artesanal */
+  --color-canvas: #1c130e;
+  --color-surface: #2b1c15;
+  --color-ink: #f5ede4;
+  --color-terracotta: #df6c41;
+  --color-terracotta-dark: #b8522c;
+  --color-olive: #9cb87e;
+}
+
+@theme {
+  --color-canvas: var(--color-canvas);
+  --color-surface: var(--color-surface);
+  --color-ink: var(--color-ink);
+  --color-terracotta: var(--color-terracotta);
+  --color-terracotta-dark: var(--color-terracotta-dark);
+  --color-olive: var(--color-olive);
   --font-serif: var(--font-playfair), "Times New Roman", serif;
   --font-sans: var(--font-jakarta), "Segoe UI", sans-serif;
 }
@@ -20,6 +39,7 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 ::selection {

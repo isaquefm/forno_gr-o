@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, UserCheck } from "lucide-react";
+import { CheckCircle2, Store, Truck, UserCheck, UtensilsCrossed } from "lucide-react";
 import Image from "next/image";
 import { useEffect } from "react";
 import { GoogleIcon } from "@/components/ui/GoogleIcon";
@@ -43,7 +43,7 @@ export function CheckoutForm({ values, errors, onChange }: CheckoutFormProps) {
       <div>
         <h3 className="font-serif text-2xl text-ink">Identificação</h3>
         <p className="mt-1 text-xs text-ink/70">
-          Para monitorarmos as entradas e garantirmos seu atendimento direto sem taxas.
+          Para acompanhar o status do pedido em tempo real e garantir seu atendimento direto.
         </p>
 
         {isHydrated && customer ? (
@@ -115,15 +115,17 @@ export function CheckoutForm({ values, errors, onChange }: CheckoutFormProps) {
         </label>
 
         <fieldset className="space-y-2">
-          <legend className="text-sm font-semibold text-ink">Modalidade</legend>
-          <div className="grid grid-cols-2 gap-2">
+          <legend className="text-sm font-semibold text-ink">Onde você vai saborear?</legend>
+          <div className="grid grid-cols-3 gap-2">
             {fulfillmentOptions.map((option) => {
               const selected = values.fulfillment === option;
               return (
                 <label
                   key={option}
-                  className={`cursor-pointer rounded-2xl border px-3 py-3 text-center text-sm font-medium transition ${
-                    selected ? "border-ink bg-ink text-canvas shadow-xs" : "border-ink/10 bg-canvas text-ink hover:bg-canvas/80"
+                  className={`flex flex-col items-center justify-center gap-1.5 cursor-pointer rounded-2xl border p-3 text-center transition ${
+                    selected
+                      ? "border-ink bg-ink text-canvas shadow-xs"
+                      : "border-ink/10 bg-canvas text-ink hover:bg-canvas/80"
                   }`}
                 >
                   <input
@@ -134,12 +136,41 @@ export function CheckoutForm({ values, errors, onChange }: CheckoutFormProps) {
                     onChange={() => onChange({ fulfillment: option })}
                     className="sr-only"
                   />
-                  {option}
+                  {option === "Na mesa" ? (
+                    <UtensilsCrossed className="size-4 shrink-0" />
+                  ) : option === "Retirada no balcão" ? (
+                    <Store className="size-4 shrink-0" />
+                  ) : (
+                    <Truck className="size-4 shrink-0" />
+                  )}
+                  <span className="text-xs font-medium leading-tight">
+                    {option === "Na mesa"
+                      ? "Na mesa"
+                      : option === "Retirada no balcão"
+                        ? "Retirada"
+                        : "Entrega"}
+                  </span>
                 </label>
               );
             })}
           </div>
         </fieldset>
+
+        {values.fulfillment === "Na mesa" ? (
+          <label className="block space-y-2 text-sm font-semibold text-ink">
+            Número da Mesa
+            <input
+              value={values.tableNumber}
+              onChange={(event) => onChange({ tableNumber: event.target.value })}
+              placeholder="Ex.: Mesa 04 (veja na placa da mesa)"
+              className="h-12 w-full rounded-2xl border border-ink/10 bg-canvas px-4 font-normal outline-none transition focus:border-terracotta"
+            />
+            <span className="block text-xs font-normal text-ink/60">
+              Nosso garçom levará seu pedido quentinho direto até você.
+            </span>
+            <FieldError message={errors.tableNumber} />
+          </label>
+        ) : null}
 
         {values.fulfillment === "Entrega" ? (
           <label className="block space-y-2 text-sm font-semibold text-ink">

@@ -2,10 +2,11 @@
 
 import {
   AlertCircle,
+  ArrowRight,
   Bell,
   BellOff,
+  Check,
   CheckCircle2,
-  ChevronRight,
   Clock,
   ExternalLink,
   Flame,
@@ -21,11 +22,13 @@ import {
   Truck,
   User,
   Users,
+  UtensilsCrossed,
   XCircle,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { formatCurrency } from "@/lib/currency";
 import type { CustomerUser } from "@/types/customer";
 import type { Order, OrderStatus } from "@/types/order";
@@ -148,12 +151,12 @@ export default function AdminPage() {
     fetchData(false);
   }, [fetchData]);
 
-  // Polling automático a cada 6 segundos quando logado
+  // Polling automático a cada 5 segundos quando logado
   useEffect(() => {
     if (!isLoggedIn) return;
     const interval = setInterval(() => {
       fetchData(true);
-    }, 6000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [isLoggedIn, fetchData]);
 
@@ -242,6 +245,15 @@ export default function AdminPage() {
     };
   }, [orders, customers]);
 
+  // Contadores por status para os filtros gigantes
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { todos: orders.length };
+    orderStatuses.forEach((st) => {
+      counts[st] = orders.filter((o) => o.status === st).length;
+    });
+    return counts;
+  }, [orders]);
+
   // Pedidos filtrados
   const filteredOrders = useMemo(() => {
     if (statusFilter === "todos") return orders;
@@ -254,7 +266,7 @@ export default function AdminPage() {
       <div className="flex min-h-screen items-center justify-center bg-canvas">
         <div className="flex flex-col items-center gap-3 text-ink/70">
           <RefreshCw className="size-8 animate-spin text-terracotta" />
-          <p className="font-serif text-lg">Carregando painel...</p>
+          <p className="font-serif text-lg text-ink">Carregando painel do balcão...</p>
         </div>
       </div>
     );
@@ -264,17 +276,17 @@ export default function AdminPage() {
   if (!isLoggedIn) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-12">
-        <div className="w-full max-w-md rounded-3xl border border-ink/10 bg-surface p-8 shadow-xl">
+        <div className="w-full max-w-md rounded-3xl border border-ink/10 bg-surface p-8 shadow-2xl">
           <div className="text-center">
             <span className="inline-flex size-14 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
               <Lock className="size-7" />
             </span>
             <h1 className="mt-4 font-serif text-3xl text-ink">Forno & Grão</h1>
             <p className="mt-1 text-xs font-semibold tracking-wider text-olive uppercase">
-              Painel da Equipe e Balcão
+              Painel de Pedidos & Balcão
             </p>
             <p className="mt-3 text-sm text-ink/70">
-              Digite a senha de acesso para visualizar pedidos e monitorar entradas no site.
+              Digite a senha da equipe para gerenciar a fila da cozinha e entregas.
             </p>
           </div>
 
@@ -326,27 +338,30 @@ export default function AdminPage() {
   // Painel Principal da Equipe
   return (
     <div className="min-h-screen bg-canvas pb-20 text-ink">
-      {/* Topbar */}
+      {/* Topbar Operacional */}
       <header className="sticky top-0 z-30 border-b border-ink/10 bg-canvas/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <Link href="/" className="font-serif text-xl tracking-tight">
+            <Link href="/" className="font-serif text-xl font-bold tracking-tight text-ink">
               Forno <span className="text-terracotta">&</span> Grão
             </Link>
-            <span className="hidden rounded-full bg-terracotta/10 px-3 py-0.5 text-xs font-semibold text-terracotta sm:inline-block">
-              Painel de Operações
+            <span className="hidden rounded-full bg-terracotta/15 px-3 py-1 text-xs font-bold text-terracotta sm:inline-block">
+              Balcão & Cozinha
             </span>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Indicador de status ao vivo */}
-            <div className="hidden items-center gap-2 text-xs text-ink/60 sm:flex">
+            <div className="hidden items-center gap-2 rounded-full border border-olive/20 bg-olive/10 px-3 py-1 text-xs font-semibold text-olive sm:flex">
               <span className="relative flex size-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-olive opacity-75"></span>
                 <span className="relative inline-flex size-2 rounded-full bg-olive"></span>
               </span>
               <span>Ao vivo</span>
             </div>
+
+            {/* Alternador de tema Café / Claro */}
+            <ThemeToggle className="size-10" />
 
             {/* Alternar som de alerta */}
             <button
@@ -356,13 +371,13 @@ export default function AdminPage() {
                 if (!soundEnabled) playNotificationChime();
               }}
               title={soundEnabled ? "Som ativado (clique para mutar)" : "Som desativado (clique para ativar)"}
-              className={`grid size-9 cursor-pointer place-items-center rounded-full border transition ${
+              className={`grid size-10 cursor-pointer place-items-center rounded-full border transition ${
                 soundEnabled
-                  ? "border-olive/30 bg-olive/10 text-olive"
+                  ? "border-olive/40 bg-olive/15 text-olive shadow-xs"
                   : "border-ink/10 bg-surface text-ink/40"
               }`}
             >
-              {soundEnabled ? <Bell className="size-4" /> : <BellOff className="size-4" />}
+              {soundEnabled ? <Bell className="size-4.5" /> : <BellOff className="size-4.5" />}
             </button>
 
             {/* Atualizar manual */}
@@ -371,26 +386,26 @@ export default function AdminPage() {
               onClick={() => fetchData(false)}
               disabled={isLoadingData}
               title="Atualizar agora"
-              className="grid size-9 cursor-pointer place-items-center rounded-full border border-ink/10 bg-surface hover:bg-canvas"
+              className="grid size-10 cursor-pointer place-items-center rounded-full border border-ink/10 bg-surface hover:bg-canvas text-ink"
             >
-              <RefreshCw className={`size-4 ${isLoadingData ? "animate-spin text-terracotta" : ""}`} />
+              <RefreshCw className={`size-4.5 ${isLoadingData ? "animate-spin text-terracotta" : ""}`} />
             </button>
 
             {/* Ver Site */}
             <Link
               href="/"
               target="_blank"
-              className="hidden items-center gap-1.5 rounded-full border border-ink/10 px-3 py-1.5 text-xs font-semibold text-ink/70 hover:bg-surface md:flex"
+              className="hidden items-center gap-1.5 rounded-full border border-ink/15 px-3.5 py-2 text-xs font-semibold text-ink transition hover:bg-surface md:flex"
             >
               <ExternalLink className="size-3.5" />
-              Ver Site
+              Ver Cardápio
             </Link>
 
             {/* Logout */}
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-ink/70 hover:bg-terracotta/10 hover:text-terracotta-dark"
+              className="flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-2 text-xs font-semibold text-ink/80 hover:bg-terracotta/10 hover:text-terracotta-dark transition"
             >
               <LogOut className="size-3.5" />
               <span className="hidden sm:inline">Sair</span>
@@ -400,145 +415,202 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
-        {/* Barra de Métricas Rápidas */}
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-          <div className="rounded-2xl border border-ink/10 bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-ink/60">Novos Pendentes</span>
-              <span className="grid size-7 place-items-center rounded-full bg-terracotta/15 text-terracotta">
-                <Flame className="size-4" />
-              </span>
-            </div>
-            <p className="mt-2 font-serif text-3xl font-semibold tabular-nums text-terracotta">
-              {metrics.newCount}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-ink/10 bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-ink/60">Em Andamento</span>
-              <span className="grid size-7 place-items-center rounded-full bg-amber-100 text-amber-800">
-                <Clock className="size-4" />
-              </span>
-            </div>
-            <p className="mt-2 font-serif text-3xl font-semibold tabular-nums text-ink">
-              {metrics.activeCount}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-ink/10 bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-ink/60">Clientes no Site</span>
-              <span className="grid size-7 place-items-center rounded-full bg-olive/15 text-olive">
-                <Users className="size-4" />
-              </span>
-            </div>
-            <p className="mt-2 font-serif text-3xl font-semibold tabular-nums text-ink">
-              {metrics.totalCustomers}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-ink/10 bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-ink/60">Faturamento Hoje</span>
-              <span className="grid size-7 place-items-center rounded-full bg-ink/5 text-ink">
-                <ShoppingBag className="size-4" />
-              </span>
-            </div>
-            <p className="mt-2 text-2xl font-bold tabular-nums text-ink sm:text-3xl">
-              {formatCurrency(metrics.revenueToday)}
-            </p>
-          </div>
-        </section>
-
-        {/* Navegação entre Abas: Pedidos x Monitoramento de Entradas Google */}
-        <div className="mt-8 flex border-b border-ink/10">
+        {/* Navegação Principal das Abas da Equipe */}
+        <div className="flex border-b border-ink/10">
           <button
             type="button"
             onClick={() => setActiveTab("pedidos")}
-            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-semibold transition ${
+            className={`flex items-center gap-2.5 border-b-2 px-6 py-3.5 text-base font-bold transition ${
               activeTab === "pedidos"
                 ? "border-terracotta text-terracotta"
                 : "border-transparent text-ink/60 hover:text-ink"
             }`}
           >
-            <Package className="size-4" />
-            Pedidos ({orders.length})
+            <Package className="size-5" />
+            Fila de Pedidos ({orders.length})
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("clientes")}
-            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-semibold transition ${
+            className={`flex items-center gap-2.5 border-b-2 px-6 py-3.5 text-base font-bold transition ${
               activeTab === "clientes"
                 ? "border-terracotta text-terracotta"
                 : "border-transparent text-ink/60 hover:text-ink"
             }`}
           >
-            <Globe className="size-4" />
-            Entradas no Site / Google ({customers.length})
+            <Globe className="size-5" />
+            Entradas no Site ({customers.length})
           </button>
         </div>
 
         {/* CONTEÚDO DA ABA PEDIDOS */}
         {activeTab === "pedidos" ? (
           <div>
-            {/* Filtros de Status */}
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {/* FILTROS GIGANTES E APARENTES NO TOPO (Feedback da Equipe) */}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold tracking-wider text-ink/60 uppercase">
+                  Filtre por etapa da produção:
+                </span>
+                {lastUpdated ? (
+                  <span className="text-xs text-ink/50">
+                    Sincronizado às {lastUpdated.toLocaleTimeString("pt-BR")}
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Grid de Filtros Grandes com Contadores Gigantes */}
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6 sm:gap-3">
+                {/* 1. Todos */}
                 <button
                   type="button"
                   onClick={() => setStatusFilter("todos")}
-                  className={`shrink-0 cursor-pointer rounded-full px-4 py-2 text-xs font-semibold transition ${
+                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
                     statusFilter === "todos"
-                      ? "bg-ink text-canvas"
-                      : "bg-surface text-ink hover:bg-surface/80"
+                      ? "border-ink bg-ink text-canvas shadow-lg ring-2 ring-ink/20"
+                      : "border-ink/10 bg-surface text-ink hover:border-ink/30"
                   }`}
                 >
-                  Todos ({orders.length})
+                  <span className="text-xs font-medium opacity-80">Todos</span>
+                  <span className="font-serif text-3xl font-bold tabular-nums">
+                    {statusCounts.todos}
+                  </span>
+                  <span className="text-[10px] mt-1 uppercase tracking-wider opacity-60">Geral</span>
                 </button>
 
-                {orderStatuses.map((st) => {
-                  const count = orders.filter((o) => o.status === st).length;
-                  const isSelected = statusFilter === st;
-                  return (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() => setStatusFilter(st)}
-                      className={`shrink-0 cursor-pointer rounded-full px-4 py-2 text-xs font-semibold transition ${
-                        isSelected
-                          ? "bg-ink text-canvas"
-                          : "bg-surface text-ink hover:bg-surface/80"
-                      }`}
-                    >
-                      {statusLabels[st]} ({count})
-                    </button>
-                  );
-                })}
-              </div>
+                {/* 2. Novos (Destaque Vermelho/Terracota pulsante se houver) */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("novo")}
+                  className={`relative flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                    statusFilter === "novo"
+                      ? "border-terracotta bg-terracotta text-canvas shadow-lg ring-2 ring-terracotta/30"
+                      : "border-terracotta/30 bg-terracotta/10 text-terracotta hover:border-terracotta/60"
+                  }`}
+                >
+                  {statusCounts.novo > 0 ? (
+                    <span className="absolute top-2 right-2 flex size-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-terracotta opacity-75"></span>
+                      <span className="relative inline-flex size-2.5 rounded-full bg-terracotta"></span>
+                    </span>
+                  ) : null}
+                  <div className="flex items-center gap-1">
+                    <Flame className="size-3.5" />
+                    <span className="text-xs font-bold">Novos</span>
+                  </div>
+                  <span className="font-serif text-3xl font-bold tabular-nums">
+                    {statusCounts.novo}
+                  </span>
+                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
+                    A Confirmar
+                  </span>
+                </button>
 
-              {lastUpdated ? (
-                <span className="text-right text-xs text-ink/50">
-                  Atualizado às {lastUpdated.toLocaleTimeString("pt-BR")}
-                </span>
-              ) : null}
+                {/* 3. Confirmados */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("confirmado")}
+                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                    statusFilter === "confirmado"
+                      ? "border-sky-600 bg-sky-600 text-canvas shadow-lg ring-2 ring-sky-600/30"
+                      : "border-sky-500/20 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:border-sky-500/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <CheckCircle2 className="size-3.5" />
+                    <span className="text-xs font-bold">Confirmados</span>
+                  </div>
+                  <span className="font-serif text-3xl font-bold tabular-nums">
+                    {statusCounts.confirmado}
+                  </span>
+                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
+                    Na Fila
+                  </span>
+                </button>
+
+                {/* 4. Preparando / No Forno */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("preparando")}
+                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                    statusFilter === "preparando"
+                      ? "border-amber-600 bg-amber-600 text-canvas shadow-lg ring-2 ring-amber-600/30"
+                      : "border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:border-amber-500/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <Clock className="size-3.5" />
+                    <span className="text-xs font-bold">No Forno</span>
+                  </div>
+                  <span className="font-serif text-3xl font-bold tabular-nums">
+                    {statusCounts.preparando}
+                  </span>
+                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
+                    Em Preparo
+                  </span>
+                </button>
+
+                {/* 5. Prontos */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("pronto")}
+                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                    statusFilter === "pronto"
+                      ? "border-olive bg-olive text-canvas shadow-lg ring-2 ring-olive/30"
+                      : "border-olive/30 bg-olive/10 text-olive hover:border-olive/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <UtensilsCrossed className="size-3.5" />
+                    <span className="text-xs font-bold">Prontos</span>
+                  </div>
+                  <span className="font-serif text-3xl font-bold tabular-nums">
+                    {statusCounts.pronto}
+                  </span>
+                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
+                    Pronto p/ Servir
+                  </span>
+                </button>
+
+                {/* 6. Entregues */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("entregue")}
+                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                    statusFilter === "entregue"
+                      ? "border-ink bg-ink text-canvas shadow-lg"
+                      : "border-ink/10 bg-surface text-ink hover:border-ink/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <Check className="size-3.5" />
+                    <span className="text-xs font-bold">Entregues</span>
+                  </div>
+                  <span className="font-serif text-3xl font-bold tabular-nums">
+                    {statusCounts.entregue}
+                  </span>
+                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
+                    Concluídos
+                  </span>
+                </button>
+              </div>
             </div>
 
-            {/* Lista de Pedidos */}
-            <div className="mt-6">
+            {/* LISTA DE CARDS GRANDES DE PEDIDOS */}
+            <div className="mt-8">
               {filteredOrders.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-ink/15 bg-surface/50 px-6 py-16 text-center">
-                  <Package className="mx-auto size-12 text-ink/30" />
-                  <h3 className="mt-4 font-serif text-2xl text-ink">Nenhum pedido encontrado</h3>
+                <div className="rounded-3xl border border-dashed border-ink/20 bg-surface/40 px-6 py-20 text-center">
+                  <Package className="mx-auto size-16 text-ink/30" />
+                  <h3 className="mt-4 font-serif text-2xl text-ink">Nenhum pedido nesta etapa</h3>
                   <p className="mt-1 text-sm text-ink/60">
                     {statusFilter === "todos"
-                      ? "Quando um cliente fizer um pedido pelo site, ele aparecerá aqui automaticamente."
-                      : `Não há pedidos com status "${statusLabels[statusFilter]}" no momento.`}
+                      ? "Nenhum pedido registrado no momento."
+                      : `Não há pedidos com o status "${statusLabels[statusFilter]}".`}
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
                   {filteredOrders.map((order) => {
                     const orderDate = new Date(order.createdAt);
                     const timeString = orderDate.toLocaleTimeString("pt-BR", {
@@ -552,91 +624,140 @@ export default function AdminPage() {
 
                     const nextStatus = nextStatusMap[order.status];
                     const nextAction = nextStatusAction[order.status];
+                    const isNew = order.status === "novo";
 
                     return (
                       <article
                         key={order.id}
-                        className={`flex flex-col justify-between rounded-3xl border bg-surface p-5 transition-shadow hover:shadow-md ${
-                          order.status === "novo"
-                            ? "border-terracotta ring-2 ring-terracotta/20"
+                        className={`flex flex-col justify-between rounded-3xl border bg-surface p-6 shadow-md transition-all duration-200 hover:shadow-xl ${
+                          isNew
+                            ? "border-terracotta ring-4 ring-terracotta/20"
                             : "border-ink/10"
                         }`}
                       >
                         <div>
-                          {/* Topo do card: Código, Horário e Badge */}
-                          <div className="flex items-start justify-between gap-2">
+                          {/* Cabeçalho do Card: Código Gigante e Badge de Status */}
+                          <div className="flex items-start justify-between gap-3 border-b border-ink/10 pb-4">
                             <div>
-                              <span className="font-serif text-xl font-bold tracking-tight text-ink">
-                                {order.code}
-                              </span>
-                              <p className="flex items-center gap-1 text-xs text-ink/60">
-                                <Clock className="size-3" />
-                                {dateString} às {timeString}
-                              </p>
-                            </div>
-                            <span
-                              className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${
-                                statusColors[order.status]
-                              }`}
-                            >
-                              {statusLabels[order.status]}
-                            </span>
-                          </div>
-
-                          {/* Informações do Cliente & Modalidade */}
-                          <div className="mt-4 border-t border-ink/10 pt-3">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold text-ink">{order.customerName}</p>
-                                {order.customerEmail ? (
-                                  <p className="flex items-center gap-1 text-xs text-ink/60">
-                                    <Mail className="size-3" />
-                                    {order.customerEmail}
-                                  </p>
+                              <div className="flex items-center gap-2">
+                                <span className="font-serif text-3xl font-bold tracking-tight text-ink">
+                                  {order.code}
+                                </span>
+                                {isNew ? (
+                                  <span className="rounded-full bg-terracotta px-2.5 py-0.5 text-[10px] font-bold text-canvas uppercase animate-pulse">
+                                    Novo
+                                  </span>
                                 ) : null}
                               </div>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-canvas px-2.5 py-0.5 text-xs text-ink/75">
-                                {order.fulfillment === "Entrega" ? (
-                                  <>
-                                    <Truck className="size-3 text-terracotta" />
-                                    Entrega
-                                  </>
-                                ) : (
-                                  <>
-                                    <Store className="size-3 text-olive" />
-                                    Retirada
-                                  </>
-                                )}
-                              </span>
+                              <p className="mt-1 flex items-center gap-1.5 text-xs text-ink/60">
+                                <Clock className="size-3.5" />
+                                {dateString} às <strong>{timeString}</strong>
+                              </p>
                             </div>
 
-                            {order.fulfillment === "Entrega" && order.address ? (
-                              <div className="mt-2 flex items-start gap-1.5 rounded-xl bg-canvas p-2.5 text-xs text-ink/80">
-                                <MapPin className="mt-0.5 size-3.5 shrink-0 text-terracotta" />
-                                <p className="line-clamp-2 leading-relaxed">{order.address}</p>
-                              </div>
-                            ) : null}
-
-                            <p className="mt-2 text-xs text-ink/60">
-                              Pagamento:{" "}
-                              <span className="font-semibold text-ink/90">{order.payment}</span>
-                              {order.changeFor ? ` (Troco para R$ ${order.changeFor})` : ""}
-                            </p>
+                            <div className="flex flex-col items-end gap-1.5">
+                              <span
+                                className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                                  statusColors[order.status]
+                                }`}
+                              >
+                                {statusLabels[order.status]}
+                              </span>
+                              <Link
+                                href={`/pedido/${order.code.replace("#", "")}`}
+                                target="_blank"
+                                className="flex items-center gap-1 text-[11px] font-semibold text-terracotta hover:underline"
+                              >
+                                Ver tela do cliente
+                                <ExternalLink className="size-3" />
+                              </Link>
+                            </div>
                           </div>
 
-                          {/* Itens do Pedido */}
-                          <div className="mt-4 border-t border-ink/10 pt-3">
-                            <p className="text-xs font-semibold tracking-wider text-ink/50 uppercase">
-                              Itens ({order.items.reduce((s, i) => s + i.quantity, 0)})
-                            </p>
-                            <ul className="mt-2 space-y-1.5 text-sm">
-                              {order.items.map((item, idx) => (
-                                <li key={idx} className="flex justify-between gap-2">
-                                  <span className="text-ink/85">
-                                    <strong className="font-semibold text-ink">{item.quantity}×</strong>{" "}
-                                    {item.name}
+                          {/* FAIXA DESTACADA DA MESA OU MODALIDADE (IMPOSSÍVEL NÃO NOTAR) */}
+                          <div className="my-4">
+                            {order.fulfillment === "Na mesa" ? (
+                              <div className="flex items-center gap-3 rounded-2xl border-2 border-terracotta/30 bg-terracotta/15 p-4 text-ink">
+                                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-terracotta text-canvas shadow-xs">
+                                  <UtensilsCrossed className="size-6" />
+                                </span>
+                                <div>
+                                  <span className="text-xs font-bold uppercase tracking-wider text-terracotta-dark">
+                                    Consumo no Local
                                   </span>
-                                  <span className="shrink-0 text-xs tabular-nums text-ink/60">
+                                  <p className="font-serif text-2xl font-bold leading-tight text-ink">
+                                    {order.tableNumber ? `MESA ${order.tableNumber}` : "Mesa no Salão"}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : order.fulfillment === "Entrega" ? (
+                              <div className="flex items-center gap-3 rounded-2xl border border-sky-400/30 bg-sky-500/10 p-4 text-ink">
+                                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-sky-600 text-canvas shadow-xs">
+                                  <Truck className="size-6" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
+                                    Entrega em Domicílio
+                                  </span>
+                                  <p className="text-sm font-semibold truncate text-ink">
+                                    {order.address || "Endereço a combinar"}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3 rounded-2xl border border-olive/30 bg-olive/10 p-4 text-ink">
+                                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-olive text-canvas shadow-xs">
+                                  <Store className="size-6" />
+                                </span>
+                                <div>
+                                  <span className="text-xs font-bold uppercase tracking-wider text-olive">
+                                    Retirada Balcão
+                                  </span>
+                                  <p className="font-serif text-xl font-bold text-ink">
+                                    Cliente retira no balcão
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Dados do Cliente e Pagamento */}
+                          <div className="rounded-2xl bg-canvas p-3.5 text-xs text-ink/80">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-sm text-ink">
+                                {order.customerName}
+                              </span>
+                              <span className="rounded-full bg-surface px-2.5 py-0.5 font-semibold text-ink/80">
+                                {order.payment}
+                                {order.changeFor ? ` (Troco: R$ ${order.changeFor})` : ""}
+                              </span>
+                            </div>
+                            {order.customerEmail ? (
+                              <p className="mt-1 flex items-center gap-1.5 text-[11px] text-ink/60">
+                                <Mail className="size-3" />
+                                {order.customerEmail}
+                              </p>
+                            ) : null}
+                          </div>
+
+                          {/* Itens do Pedido com Quantidades em Destaque */}
+                          <div className="mt-4 border-t border-ink/10 pt-3">
+                            <p className="text-xs font-bold tracking-wider text-ink/50 uppercase">
+                              Itens da Comanda ({order.items.reduce((s, i) => s + i.quantity, 0)})
+                            </p>
+                            <ul className="mt-2.5 space-y-2">
+                              {order.items.map((item, idx) => (
+                                <li
+                                  key={idx}
+                                  className="flex items-center justify-between rounded-xl bg-canvas/70 px-3 py-2 text-sm"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <span className="grid size-6.5 place-items-center rounded-lg bg-terracotta/15 text-xs font-bold text-terracotta">
+                                      {item.quantity}×
+                                    </span>
+                                    <span className="font-semibold text-ink">{item.name}</span>
+                                  </div>
+                                  <span className="font-medium tabular-nums text-xs text-ink/60">
                                     {formatCurrency(item.lineTotal)}
                                   </span>
                                 </li>
@@ -645,66 +766,61 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        {/* Rodapé do Card: Total e Botões de Ação */}
-                        <div className="mt-5 border-t border-ink/10 pt-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-ink/60">Subtotal</span>
-                            <span className="font-serif text-xl font-bold tabular-nums text-ink">
+                        {/* Rodapé do Card: Subtotal e BOTÃO GIGANTE DE AÇÃO */}
+                        <div className="mt-6 border-t border-ink/10 pt-4">
+                          <div className="flex items-center justify-between text-sm mb-4">
+                            <span className="text-xs text-ink/60">Total do Pedido:</span>
+                            <span className="font-serif text-2xl font-bold tabular-nums text-ink">
                               {formatCurrency(order.subtotal)}
                             </span>
                           </div>
 
-                          <div className="mt-4 flex flex-col gap-2">
-                            {/* Botão de avanço rápido no fluxo */}
-                            {nextStatus && nextAction ? (
+                          {/* BOTÃO DE AÇÃO GIGANTE PARA TOCAR COM FACILIDADE */}
+                          {nextStatus && nextAction ? (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateStatus(order.id, nextStatus)}
+                              className="inline-flex h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-terracotta px-5 text-sm font-bold text-canvas shadow-md transition-all hover:bg-terracotta-dark hover:shadow-lg active:scale-98"
+                            >
+                              <span>Avançar: {nextAction}</span>
+                              <ArrowRight className="size-4.5" />
+                            </button>
+                          ) : order.status === "entregue" ? (
+                            <div className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-olive/15 text-sm font-bold text-olive">
+                              <CheckCircle2 className="size-5" />
+                              Pedido Concluído e Entregue
+                            </div>
+                          ) : null}
+
+                          {/* Seletor Manual de Status e Cancelar */}
+                          <div className="mt-3 flex items-center justify-between gap-2 text-xs pt-1">
+                            {order.status !== "cancelado" && order.status !== "entregue" ? (
                               <button
                                 type="button"
-                                onClick={() => handleUpdateStatus(order.id, nextStatus)}
-                                className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-terracotta px-4 text-xs font-semibold text-canvas transition-colors hover:bg-terracotta-dark"
+                                onClick={() => handleUpdateStatus(order.id, "cancelado")}
+                                className="cursor-pointer text-ink/40 hover:text-terracotta-dark hover:underline"
                               >
-                                <span>{nextAction}</span>
-                                <ChevronRight className="size-3.5" />
+                                Cancelar pedido
                               </button>
-                            ) : order.status === "entregue" ? (
-                              <div className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-olive/15 text-xs font-semibold text-olive">
-                                <CheckCircle2 className="size-3.5" />
-                                Pedido Concluído
-                              </div>
-                            ) : null}
+                            ) : (
+                              <span />
+                            )}
 
-                            {/* Ações secundárias: Seletor de Status ou Cancelar */}
-                            <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-                              {order.status !== "cancelado" && order.status !== "entregue" ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateStatus(order.id, "cancelado")}
-                                  className="cursor-pointer text-ink/40 hover:text-terracotta-dark hover:underline"
-                                >
-                                  Cancelar pedido
-                                </button>
-                              ) : null}
-
-                              {order.status === "cancelado" ? (
-                                <span className="flex items-center gap-1 text-ink/40">
-                                  <XCircle className="size-3.5" /> Cancelado
-                                </span>
-                              ) : null}
-
-                              <div className="ml-auto">
-                                <select
-                                  value={order.status}
-                                  onChange={(e) =>
-                                    handleUpdateStatus(order.id, e.target.value as OrderStatus)
-                                  }
-                                  className="cursor-pointer rounded-lg border border-ink/10 bg-canvas px-2 py-1 text-[11px] text-ink/75 outline-none"
-                                >
-                                  {orderStatuses.map((st) => (
-                                    <option key={st} value={st}>
-                                      Mudar para: {statusLabels[st]}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[11px] text-ink/50">Mudar para:</span>
+                              <select
+                                value={order.status}
+                                onChange={(e) =>
+                                  handleUpdateStatus(order.id, e.target.value as OrderStatus)
+                                }
+                                className="cursor-pointer rounded-xl border border-ink/15 bg-canvas px-2.5 py-1.5 text-xs font-medium text-ink outline-none"
+                              >
+                                {orderStatuses.map((st) => (
+                                  <option key={st} value={st}>
+                                    {statusLabels[st]}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </div>
                         </div>
@@ -717,7 +833,7 @@ export default function AdminPage() {
           </div>
         ) : null}
 
-        {/* CONTEÚDO DA ABA ENTRADAS NO SITE / GOOGLE */}
+        {/* CONTEÚDO DA ABA ENTRADAS NO SITE */}
         {activeTab === "clientes" ? (
           <div className="mt-6">
             <div className="rounded-3xl border border-ink/10 bg-surface p-6">
