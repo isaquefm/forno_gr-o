@@ -30,3 +30,7 @@ create table if not exists public.customers (
 -- Bloqueia acesso público direto; o site acessa pelo servidor com a service role key.
 alter table public.orders enable row level security;
 alter table public.customers enable row level security;
+
+-- Libera as tabelas apenas para a service role (usada pelo servidor do site).
+grant usage on schema public to service_role;
+grant select, insert, update, delete on public.orders, public.customers to service_role;
