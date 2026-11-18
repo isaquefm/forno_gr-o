@@ -460,139 +460,129 @@ export default function AdminPage() {
                 ) : null}
               </div>
 
-              {/* Grid de Filtros Grandes com Contadores Gigantes */}
+              {/* Grid de Filtros Grandes com Contadores Gigantes em Preto / Alto Contraste */}
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6 sm:gap-3">
                 {/* 1. Todos */}
                 <button
                   type="button"
                   onClick={() => setStatusFilter("todos")}
-                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                  className={`flex flex-col items-center justify-center rounded-2xl border-2 p-4 text-center transition-all cursor-pointer ${
                     statusFilter === "todos"
-                      ? "border-ink bg-ink text-canvas shadow-lg ring-2 ring-ink/20"
-                      : "border-ink/10 bg-surface text-ink hover:border-ink/30"
+                      ? "border-ink bg-ink text-canvas shadow-xl scale-[1.02]"
+                      : "border-ink/20 bg-canvas text-ink hover:border-ink/50 shadow-xs"
                   }`}
                 >
-                  <span className="text-xs font-medium opacity-80">Todos</span>
-                  <span className="font-serif text-3xl font-bold tabular-nums">
+                  <span className="text-xs font-bold uppercase tracking-wider opacity-75">Todos</span>
+                  <span className="font-serif text-3xl font-extrabold tabular-nums my-0.5">
                     {statusCounts.todos}
                   </span>
-                  <span className="text-[10px] mt-1 uppercase tracking-wider opacity-60">Geral</span>
+                  <span className="text-[11px] font-semibold opacity-60">Geral</span>
                 </button>
 
-                {/* 2. Novos (Destaque Vermelho/Terracota pulsante se houver) */}
+                {/* 2. Novos */}
                 <button
                   type="button"
                   onClick={() => setStatusFilter("novo")}
-                  className={`relative flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                  className={`relative flex flex-col items-center justify-center rounded-2xl border-2 p-4 text-center transition-all cursor-pointer ${
                     statusFilter === "novo"
-                      ? "border-terracotta bg-terracotta text-canvas shadow-lg ring-2 ring-terracotta/30"
-                      : "border-terracotta/30 bg-terracotta/10 text-terracotta hover:border-terracotta/60"
+                      ? "border-ink bg-ink text-canvas shadow-xl scale-[1.02]"
+                      : "border-ink/20 bg-canvas text-ink hover:border-ink/50 shadow-xs"
                   }`}
                 >
                   {statusCounts.novo > 0 ? (
-                    <span className="absolute top-2 right-2 flex size-2.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-terracotta opacity-75"></span>
-                      <span className="relative inline-flex size-2.5 rounded-full bg-terracotta"></span>
+                    <span className="absolute top-2.5 right-2.5 flex size-3">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-600 opacity-75"></span>
+                      <span className="relative inline-flex size-3 rounded-full bg-red-600"></span>
                     </span>
                   ) : null}
-                  <div className="flex items-center gap-1">
-                    <Flame className="size-3.5" />
-                    <span className="text-xs font-bold">Novos</span>
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="size-4 text-red-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Novos</span>
                   </div>
-                  <span className="font-serif text-3xl font-bold tabular-nums">
+                  <span className="font-serif text-3xl font-extrabold tabular-nums my-0.5 text-red-600 dark:text-red-400">
                     {statusCounts.novo}
                   </span>
-                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
-                    A Confirmar
-                  </span>
+                  <span className="text-[11px] font-semibold opacity-60">A Confirmar</span>
                 </button>
 
                 {/* 3. Confirmados */}
                 <button
                   type="button"
                   onClick={() => setStatusFilter("confirmado")}
-                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                  className={`flex flex-col items-center justify-center rounded-2xl border-2 p-4 text-center transition-all cursor-pointer ${
                     statusFilter === "confirmado"
-                      ? "border-sky-600 bg-sky-600 text-canvas shadow-lg ring-2 ring-sky-600/30"
-                      : "border-sky-500/20 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:border-sky-500/40"
+                      ? "border-ink bg-ink text-canvas shadow-xl scale-[1.02]"
+                      : "border-ink/20 bg-canvas text-ink hover:border-ink/50 shadow-xs"
                   }`}
                 >
-                  <div className="flex items-center gap-1">
-                    <CheckCircle2 className="size-3.5" />
-                    <span className="text-xs font-bold">Confirmados</span>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4 text-sky-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Confirmados</span>
                   </div>
-                  <span className="font-serif text-3xl font-bold tabular-nums">
+                  <span className="font-serif text-3xl font-extrabold tabular-nums my-0.5">
                     {statusCounts.confirmado}
                   </span>
-                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
-                    Na Fila
-                  </span>
+                  <span className="text-[11px] font-semibold opacity-60">Na Fila</span>
                 </button>
 
                 {/* 4. Preparando / No Forno */}
                 <button
                   type="button"
                   onClick={() => setStatusFilter("preparando")}
-                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                  className={`flex flex-col items-center justify-center rounded-2xl border-2 p-4 text-center transition-all cursor-pointer ${
                     statusFilter === "preparando"
-                      ? "border-amber-600 bg-amber-600 text-canvas shadow-lg ring-2 ring-amber-600/30"
-                      : "border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:border-amber-500/40"
+                      ? "border-ink bg-ink text-canvas shadow-xl scale-[1.02]"
+                      : "border-ink/20 bg-canvas text-ink hover:border-ink/50 shadow-xs"
                   }`}
                 >
-                  <div className="flex items-center gap-1">
-                    <Clock className="size-3.5" />
-                    <span className="text-xs font-bold">No Forno</span>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="size-4 text-amber-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider">No Forno</span>
                   </div>
-                  <span className="font-serif text-3xl font-bold tabular-nums">
+                  <span className="font-serif text-3xl font-extrabold tabular-nums my-0.5">
                     {statusCounts.preparando}
                   </span>
-                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
-                    Em Preparo
-                  </span>
+                  <span className="text-[11px] font-semibold opacity-60">Em Preparo</span>
                 </button>
 
                 {/* 5. Prontos */}
                 <button
                   type="button"
                   onClick={() => setStatusFilter("pronto")}
-                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                  className={`flex flex-col items-center justify-center rounded-2xl border-2 p-4 text-center transition-all cursor-pointer ${
                     statusFilter === "pronto"
-                      ? "border-olive bg-olive text-canvas shadow-lg ring-2 ring-olive/30"
-                      : "border-olive/30 bg-olive/10 text-olive hover:border-olive/50"
+                      ? "border-ink bg-ink text-canvas shadow-xl scale-[1.02]"
+                      : "border-ink/20 bg-canvas text-ink hover:border-ink/50 shadow-xs"
                   }`}
                 >
-                  <div className="flex items-center gap-1">
-                    <UtensilsCrossed className="size-3.5" />
-                    <span className="text-xs font-bold">Prontos</span>
+                  <div className="flex items-center gap-1.5">
+                    <UtensilsCrossed className="size-4 text-emerald-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Prontos</span>
                   </div>
-                  <span className="font-serif text-3xl font-bold tabular-nums">
+                  <span className="font-serif text-3xl font-extrabold tabular-nums my-0.5">
                     {statusCounts.pronto}
                   </span>
-                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
-                    Pronto p/ Servir
-                  </span>
+                  <span className="text-[11px] font-semibold opacity-60">Pronto p/ Servir</span>
                 </button>
 
                 {/* 6. Entregues */}
                 <button
                   type="button"
                   onClick={() => setStatusFilter("entregue")}
-                  className={`flex flex-col items-center justify-center rounded-2xl border p-3.5 text-center transition cursor-pointer ${
+                  className={`flex flex-col items-center justify-center rounded-2xl border-2 p-4 text-center transition-all cursor-pointer ${
                     statusFilter === "entregue"
-                      ? "border-ink bg-ink text-canvas shadow-lg"
-                      : "border-ink/10 bg-surface text-ink hover:border-ink/30"
+                      ? "border-ink bg-ink text-canvas shadow-xl scale-[1.02]"
+                      : "border-ink/20 bg-canvas text-ink hover:border-ink/50 shadow-xs"
                   }`}
                 >
-                  <div className="flex items-center gap-1">
-                    <Check className="size-3.5" />
-                    <span className="text-xs font-bold">Entregues</span>
+                  <div className="flex items-center gap-1.5">
+                    <Check className="size-4 text-gray-500" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Entregues</span>
                   </div>
-                  <span className="font-serif text-3xl font-bold tabular-nums">
+                  <span className="font-serif text-3xl font-extrabold tabular-nums my-0.5">
                     {statusCounts.entregue}
                   </span>
-                  <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
-                    Concluídos
-                  </span>
+                  <span className="text-[11px] font-semibold opacity-60">Concluídos</span>
                 </button>
               </div>
             </div>

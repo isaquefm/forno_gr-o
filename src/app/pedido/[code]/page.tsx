@@ -5,6 +5,7 @@ import {
   Check,
   CheckCircle2,
   Clock,
+  Copy,
   Flame,
   MessageCircle,
   Package,
@@ -60,6 +61,7 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<"copied" | "error" | null>(null);
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
   const phone = getWhatsAppPhone() || "5514997071115";
 
@@ -103,6 +105,23 @@ export default function OrderTrackingPage() {
     }, 4000);
     return () => clearInterval(interval);
   }, [order, fetchOrder]);
+
+  useEffect(() => {
+    if (!copyFeedback) return;
+    const timeout = window.setTimeout(() => setCopyFeedback(null), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [copyFeedback]);
+
+  async function copyOrderCode() {
+    if (!order) return;
+
+    try {
+      await navigator.clipboard.writeText(order.code);
+      setCopyFeedback("copied");
+    } catch {
+      setCopyFeedback("error");
+    }
+  }
 
   const currentStep = order ? getStepIndex(order.status) : 0;
   const isCancelled = order?.status === "cancelado";
@@ -149,6 +168,44 @@ export default function OrderTrackingPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-serif text-3xl font-bold tracking-tight text-ink sm:text-4xl">
                       {order.code}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={copyOrderCode}
+                      title={
+                        copyFeedback === "copied"
+                          ? "Código copiado"
+                          : copyFeedback === "error"
+                            ? "Não foi possível copiar. Tente novamente"
+                            : "Copiar código"
+                      }
+                      aria-label={
+                        copyFeedback === "copied"
+                          ? "Código copiado"
+                          : copyFeedback === "error"
+                            ? "Não foi possível copiar. Tente novamente"
+                            : "Copiar código"
+                      }
+                      className={`grid size-8 place-items-center rounded-lg border bg-canvas transition cursor-pointer ${
+                        copyFeedback === "copied"
+                          ? "border-olive/50 bg-olive/10 text-olive"
+                          : copyFeedback === "error"
+                            ? "border-terracotta/50 bg-terracotta/10 text-terracotta"
+                            : "border-ink/10 text-ink/70 hover:border-terracotta hover:text-terracotta"
+                      }`}
+                    >
+                      {copyFeedback === "copied" ? (
+                        <Check className="size-3.5" />
+                      ) : (
+                        <Copy className="size-3.5" />
+                      )}
+                    </button>
+                    <span className="sr-only" aria-live="polite">
+                      {copyFeedback === "copied"
+                        ? "Código do pedido copiado"
+                        : copyFeedback === "error"
+                          ? "Não foi possível copiar o código do pedido"
+                          : ""}
                     </span>
                     <span className="relative flex size-2.5">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>

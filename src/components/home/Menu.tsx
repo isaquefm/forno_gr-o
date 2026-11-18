@@ -34,13 +34,17 @@ export function Menu() {
     <section id="cardapio" className="scroll-mt-24 bg-surface/60 px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-6xl">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold tracking-[0.18em] text-olive uppercase">
-            Cardápio digital
-          </p>
-          <h2 className="mt-3 font-serif text-3xl sm:text-5xl">Peça direto da casa</h2>
-          <p className="mt-4 text-ink/75">
-            Escolha a categoria ou busque por nome e ingrediente. A sacola monta o pedido
-            para o WhatsApp.
+          <div className="inline-flex items-center gap-2 rounded-full border border-olive/20 bg-olive/10 px-3 py-1 text-[11px] font-semibold text-olive uppercase tracking-wider mb-3">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-olive opacity-75"></span>
+              <span className="relative inline-flex size-2 rounded-full bg-olive"></span>
+            </span>
+            Forno Ativo Hoje · Preparo médio 15-20 min
+          </div>
+          <h2 className="font-serif text-3xl sm:text-5xl">Peça direto da casa</h2>
+          <p className="mt-3 text-ink/75">
+            Escolha a categoria ou busque por nome e ingrediente. Acompanhe seu pedido ao vivo
+            na mesa ou em casa.
           </p>
         </div>
 
