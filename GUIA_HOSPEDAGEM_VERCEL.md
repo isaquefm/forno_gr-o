@@ -1,4 +1,4 @@
-# 🍞 Guia Prático: Como Hospedar o Site da Forno & Grão na Vercel
+﻿# 🍞 Guia Prático: Como Hospedar o Site da Forno & Grão na Vercel
 
 Este guia foi elaborado passo a passo com linguagem simples para que qualquer pessoa consiga colocar o site no ar sem dificuldades.
 
@@ -52,7 +52,7 @@ Na mesma página de importação, desça até o campo chamado **"Environment Var
 
 ### 2ª Variável (Senha de acesso ao Painel da Equipe):
 - **Key (Nome):** `ADMIN_PASSWORD`
-- **Value (Valor):** `fornograo123` *(ou a senha que você preferir)*
+- **Value (Valor):** *(crie uma senha forte só sua)*
 - Clique em **Add**.
 
 *(Opcional futuro)*: Se mais tarde você quiser o botão nativo do Google OAuth, poderá adicionar também a variável `NEXT_PUBLIC_GOOGLE_CLIENT_ID`. Se não colocar, o site já funciona normalmente com o login seguro automático!

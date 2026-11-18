@@ -1,88 +1,88 @@
-import fs from "fs/promises";
-import path from "path";
+import { getSupabase } from "@/lib/supabaseServer";
 import type { CreateOrderPayload, Order, OrderStatus } from "@/types/order";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const ORDERS_FILE = path.join(DATA_DIR, "orders.json");
+interface OrderRow {
+  id: string;
+  number: number;
+  customer_name: string;
+  customer_email: string | null;
+  fulfillment: Order["fulfillment"];
+  address: string | null;
+  payment: Order["payment"];
+  change_for: string | null;
+  items: Order["items"];
+  subtotal: number | string;
+  status: OrderStatus;
+  created_at: string;
+  updated_at: string;
+}
 
-async function ensureDataFile(): Promise<void> {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    try {
-      await fs.access(ORDERS_FILE);
-    } catch {
-      await fs.writeFile(ORDERS_FILE, JSON.stringify([], null, 2), "utf-8");
-    }
-  } catch (error) {
-    console.error("Erro ao garantir arquivo de pedidos:", error);
-  }
+function toOrder(row: OrderRow): Order {
+  return {
+    id: row.id,
+    code: `#FG-${row.number}`,
+    customerName: row.customer_name,
+    customerEmail: row.customer_email ?? undefined,
+    fulfillment: row.fulfillment,
+    address: row.address ?? undefined,
+    payment: row.payment,
+    changeFor: row.change_for ?? undefined,
+    items: row.items,
+    subtotal: Number(row.subtotal),
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export async function getOrders(): Promise<Order[]> {
-  await ensureDataFile();
-  try {
-    const raw = await fs.readFile(ORDERS_FILE, "utf-8");
-    const data = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    // Ordena do mais recente para o mais antigo
-    return data.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
-  } catch (error) {
+  const { data, error } = await getSupabase()
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
     console.error("Erro ao ler pedidos:", error);
     return [];
   }
+  return (data as OrderRow[]).map(toOrder);
 }
 
 export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
-  await ensureDataFile();
-  const orders = await getOrders();
-
-  const now = new Date();
-  const nextNumber = 1000 + orders.length + 1;
-  const code = `#FG-${nextNumber}`;
   const id = `order_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-  const newOrder: Order = {
-    id,
-    code,
-    customerName: payload.customerName.trim(),
-    customerEmail: payload.customerEmail?.trim() || undefined,
-    fulfillment: payload.fulfillment,
-    address: payload.address?.trim() || undefined,
-    payment: payload.payment,
-    changeFor: payload.changeFor?.trim() || undefined,
-    items: payload.items,
-    subtotal: payload.subtotal,
-    status: "novo",
-    createdAt: now.toISOString(),
-    updatedAt: now.toISOString(),
-  };
+  const { data, error } = await getSupabase()
+    .from("orders")
+    .insert({
+      id,
+      customer_name: payload.customerName.trim(),
+      customer_email: payload.customerEmail?.trim() || null,
+      fulfillment: payload.fulfillment,
+      address: payload.address?.trim() || null,
+      payment: payload.payment,
+      change_for: payload.changeFor?.trim() || null,
+      items: payload.items,
+      subtotal: payload.subtotal,
+      status: "novo",
+    })
+    .select()
+    .single();
 
-  const updatedOrders = [newOrder, ...orders];
-  await fs.writeFile(ORDERS_FILE, JSON.stringify(updatedOrders, null, 2), "utf-8");
-
-  return newOrder;
+  if (error) throw error;
+  return toOrder(data as OrderRow);
 }
 
 export async function updateOrderStatus(
   id: string,
   newStatus: OrderStatus,
 ): Promise<Order | null> {
-  await ensureDataFile();
-  const orders = await getOrders();
-  const index = orders.findIndex((o) => o.id === id);
+  const { data, error } = await getSupabase()
+    .from("orders")
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .maybeSingle();
 
-  if (index === -1) {
-    return null;
-  }
-
-  orders[index] = {
-    ...orders[index],
-    status: newStatus,
-    updatedAt: new Date().toISOString(),
-  };
-
-  await fs.writeFile(ORDERS_FILE, JSON.stringify(orders, null, 2), "utf-8");
-  return orders[index];
+  if (error) throw error;
+  return data ? toOrder(data as OrderRow) : null;
 }

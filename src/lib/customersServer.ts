@@ -1,76 +1,88 @@
-import fs from "fs/promises";
-import path from "path";
+import { getSupabase } from "@/lib/supabaseServer";
 import type { CustomerUser, RegisterEntryPayload } from "@/types/customer";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const CUSTOMERS_FILE = path.join(DATA_DIR, "customers.json");
+interface CustomerRow {
+  id: string;
+  name: string;
+  email: string;
+  picture: string | null;
+  provider: "google";
+  first_visit_at: string;
+  last_login_at: string;
+  login_count: number;
+}
 
-async function ensureDataFile(): Promise<void> {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    try {
-      await fs.access(CUSTOMERS_FILE);
-    } catch {
-      await fs.writeFile(CUSTOMERS_FILE, JSON.stringify([], null, 2), "utf-8");
-    }
-  } catch (error) {
-    console.error("Erro ao inicializar arquivo de clientes:", error);
-  }
+function toCustomer(row: CustomerRow): CustomerUser {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    picture: row.picture ?? undefined,
+    provider: row.provider,
+    firstVisitAt: row.first_visit_at,
+    lastLoginAt: row.last_login_at,
+    loginCount: row.login_count,
+  };
 }
 
 export async function getCustomers(): Promise<CustomerUser[]> {
-  await ensureDataFile();
-  try {
-    const raw = await fs.readFile(CUSTOMERS_FILE, "utf-8");
-    const data = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.sort(
-      (a, b) => new Date(b.lastLoginAt).getTime() - new Date(a.lastLoginAt).getTime(),
-    );
-  } catch (error) {
+  const { data, error } = await getSupabase()
+    .from("customers")
+    .select("*")
+    .order("last_login_at", { ascending: false });
+
+  if (error) {
     console.error("Erro ao ler clientes:", error);
     return [];
   }
+  return (data as CustomerRow[]).map(toCustomer);
 }
 
 export async function registerOrUpdateCustomer(
   payload: RegisterEntryPayload,
 ): Promise<CustomerUser> {
-  await ensureDataFile();
-  const customers = await getCustomers();
-  const normalizedEmail = payload.email.trim().toLowerCase();
+  const supabase = getSupabase();
+  const email = payload.email.trim().toLowerCase();
   const now = new Date().toISOString();
 
-  const existingIndex = customers.findIndex(
-    (c) => c.email.toLowerCase() === normalizedEmail,
-  );
+  const { data: current, error: readError } = await supabase
+    .from("customers")
+    .select("*")
+    .eq("email", email)
+    .maybeSingle();
+  if (readError) throw readError;
 
-  if (existingIndex !== -1) {
-    const current = customers[existingIndex];
-    const updated: CustomerUser = {
-      ...current,
-      name: payload.name.trim() || current.name,
-      picture: payload.picture || current.picture,
-      lastLoginAt: now,
-      loginCount: (current.loginCount || 1) + 1,
-    };
-    customers[existingIndex] = updated;
-    await fs.writeFile(CUSTOMERS_FILE, JSON.stringify(customers, null, 2), "utf-8");
-    return updated;
+  if (current) {
+    const row = current as CustomerRow;
+    const { data, error } = await supabase
+      .from("customers")
+      .update({
+        name: payload.name.trim() || row.name,
+        picture: payload.picture || row.picture,
+        last_login_at: now,
+        login_count: (row.login_count || 1) + 1,
+      })
+      .eq("id", row.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return toCustomer(data as CustomerRow);
   }
 
-  const newCustomer: CustomerUser = {
-    id: `cust_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    name: payload.name.trim(),
-    email: normalizedEmail,
-    picture: payload.picture,
-    provider: "google",
-    firstVisitAt: now,
-    lastLoginAt: now,
-    loginCount: 1,
-  };
-
-  const updatedCustomers = [newCustomer, ...customers];
-  await fs.writeFile(CUSTOMERS_FILE, JSON.stringify(updatedCustomers, null, 2), "utf-8");
-  return newCustomer;
+  const { data, error } = await supabase
+    .from("customers")
+    .insert({
+      id: `cust_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      name: payload.name.trim(),
+      email,
+      picture: payload.picture ?? null,
+      provider: "google",
+      first_visit_at: now,
+      last_login_at: now,
+      login_count: 1,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return toCustomer(data as CustomerRow);
 }
